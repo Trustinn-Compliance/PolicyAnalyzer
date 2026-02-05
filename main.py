@@ -57,3 +57,18 @@ async def process_upload_file(file: UploadFile = File(...)):
     except Exception as error:
         print(error)
         raise HTTPException(status_code=500)
+
+
+@app.get("/policy_extraction/")
+async def process_upload_file(input_text: str):
+    try:
+        if len(input_text) >= 36000:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail=f"Too many characters. "
+            )
+        extracted = extractor.extract(input_text)
+        return extracted
+    except Exception as error:
+        print(error)
+        raise HTTPException(status_code=500)
