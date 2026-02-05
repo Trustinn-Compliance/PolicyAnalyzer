@@ -1,3 +1,43 @@
+# Quick Start
+
+## Installation
+```angular2html
+pip install -r requirements.txt
+```
+Install the dependencies
+
+#### OSX
+```angular2html
+brew install libmagic
+```
+
+#### Debian/Ubuntu
+```angular2html
+sudo apt-get install libmagic1
+```
+
+## Configuration
+Add a .env file in the root directory and edit its contents as follows:
+```angular2html
+OPENAI_MODEL="YOUR_FAVOURITE_MODEL"
+OPENAI_API_KEY="YOUR_API_KEY"
+# If you are using a non-OpenAI model, enable this environment variable and set the correct value.
+# Otherwise, comment it out.
+OPENAI_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+```
+
+## Run
+Execute the following command to start the server:
+```angular2html
+make run
+```
+Additionally, if you want to run the server in the background, use:
+```angular2html
+make serve
+```
+
+
 # PoliGraph: Automated Privacy Policy Analysis using Knowledge Graphs
 
 We propose PoliGraph, a framework to represent data collection statements in a privacy policy as a knowledge graph. We implemented an NLP-based tool, PoliGraph-er, to generate PoliGraphs and enable us to perform many analyses.

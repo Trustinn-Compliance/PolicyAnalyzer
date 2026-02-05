@@ -1,0 +1,20 @@
+python-docx
+dotenv
+langextract
+python-multipart
+fastapi[all]
+python-magic
+# Original dependencies
+spacy
+tldextract
+setfit
+anytree
+langdetect
+unidecode
+requests_cache
+doccano-client
+inflect
+exrex
+seaborn
+beautifulsoup4
+werkzeug

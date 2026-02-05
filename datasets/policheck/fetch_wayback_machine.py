@@ -12,7 +12,7 @@ import time
 from bs4 import BeautifulSoup
 import requests
 from requests.exceptions import HTTPError
-from werkzeug.urls import url_fix, url_join
+from urllib.parse import urljoin, urlparse, urlunparse, quote
 
 logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.INFO)
 
@@ -35,7 +35,7 @@ def check_meta_redirect(content, base_url):
             if url.startswith("url="):
                 url = url[4:]
 
-            return url_join(base_url, url)
+            return urljoin(base_url, url)
 
     return None
 
@@ -51,7 +51,7 @@ def main():
     # read PoliCheck's flow.csv
     with open(args.flow_csv, newline="") as fin:
         for row in csv.DictReader(fin, fieldnames=list("01234567") + ["policy_url"]):
-            all_urls.add(url_fix(row["policy_url"]))
+            all_urls.add(urlparse(row["policy_url"]))
 
     # shuffle URLs so multiple servers crawl in different orders
     all_urls = list(all_urls)

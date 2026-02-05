@@ -1,6 +1,10 @@
 import importlib.resources as pkg_resources
+import json
+import re
+from typing import List, Dict
 
 import spacy
+from docx import Document
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 
@@ -60,16 +64,16 @@ def align_noun_phrases(doc: Doc) -> Doc:
 
     # Excluded dependencies of left children
     left_forbidden_deps = frozenset([
-        "dep",   # NLP glitches
+        "dep",  # NLP glitches
         "meta",  # e.g. bullet point
     ])
 
     # Excluded dependencies of right children
     right_forbidden_deps = frozenset([
         "relcl", "advcl", "acomp", "pcomp", "ccomp", "xcomp",  # clauses except "acl"
-        "appos", "conj", "cc", "preconj", # conjuncts
-        "punct", "dep",                   # NLP glitches
-        "meta",                           # e.g. bullet point
+        "appos", "conj", "cc", "preconj",  # conjuncts
+        "punct", "dep",  # NLP glitches
+        "meta",  # e.g. bullet point
     ])
 
     def like_phrase_root(token):
@@ -87,9 +91,9 @@ def align_noun_phrases(doc: Doc) -> Doc:
                 child_indices = sorted(t.i for t in child.subtree)
 
                 if (
-                    not any(t.dep_ in left_forbidden_deps for t in child.subtree)      # Forbidden deps
-                    and left_boundaries[-1] == child_indices[-1] + 1                   # Continuous
-                    and child_indices[-1] - child_indices[0] + 1 == len(child_indices) # Continuous subtree
+                        not any(t.dep_ in left_forbidden_deps for t in child.subtree)  # Forbidden deps
+                        and left_boundaries[-1] == child_indices[-1] + 1  # Continuous
+                        and child_indices[-1] - child_indices[0] + 1 == len(child_indices)  # Continuous subtree
                 ):
                     left_boundaries.append(child_indices[0])
                 else:
@@ -102,10 +106,10 @@ def align_noun_phrases(doc: Doc) -> Doc:
                 child_indices = sorted(t.i for t in child.subtree)
 
                 if (
-                    not any(t.dep_ in right_forbidden_deps for t in child.subtree)     # Forbidden deps
-                    and ent_root_mapping.keys().isdisjoint(child_indices)              # No overlap w/ other named ents
-                    and right_boundaries[-1] == child_indices[0]                       # Continuous
-                    and child_indices[-1] - child_indices[0] + 1 == len(child_indices) # Continuous subtree
+                        not any(t.dep_ in right_forbidden_deps for t in child.subtree)  # Forbidden deps
+                        and ent_root_mapping.keys().isdisjoint(child_indices)  # No overlap w/ other named ents
+                        and right_boundaries[-1] == child_indices[0]  # Continuous
+                        and child_indices[-1] - child_indices[0] + 1 == len(child_indices)  # Continuous subtree
                 ):
                     right_boundaries.append(child_indices[-1] + 1)
                 else:
@@ -242,3 +246,61 @@ def token_to_source(token: Token) -> tuple:
     doc = token.doc
     source_mapping = doc.user_data["source"]
     return source_mapping[token.i]
+
+
+def write_jsonl(instances: List[Dict], file_path: str):
+    with open(file_path, "w") as file:
+        for instance in instances:
+            file.write(json.dumps(instance, ensure_ascii=False) + "\n")
+
+
+def read_docx_text_from_file_path(path: str) -> str:
+    doc = Document(path)
+    return read_docx_text(doc)
+
+
+def read_docx_text(doc: Document) -> str:
+    parts = []
+
+    for p in doc.paragraphs:
+        t = p.text.strip()
+        if t:
+            parts.append(t)
+
+    for table in doc.tables:
+        for row in table.rows:
+            cells = [c.text.strip() for c in row.cells]
+            if any(cells):
+                parts.append(" | ".join(cells))
+
+    return "\n".join(parts)
+
+
+def parse_results_from_response(response):
+    try:
+        result = json.loads(response)
+    except json.decoder.JSONDecodeError:
+        extracted_json = extract_json(response)
+        new_retrieved_facts = json.loads(extracted_json)["entities"]
+        return new_retrieved_facts
+    except Exception as e:
+        print(f"Exception while parsing response: {e}")
+        return []
+    if 'entities' not in result:
+        print(f"no entities, result: {result}")
+        return []
+    return result['entities']
+
+
+def extract_json(text):
+    """
+    Extracts JSON content from a string, removing enclosing triple backticks and optional 'json' tag if present.
+    If no code block is found, returns the text as-is.
+    """
+    text = text.strip()
+    match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+    if match:
+        json_str = match.group(1)
+    else:
+        json_str = text  # assume it's raw JSON
+    return json_str

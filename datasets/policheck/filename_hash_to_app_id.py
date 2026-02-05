@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import shutil
 
-from werkzeug.urls import url_fix
+from urllib.parse import urljoin, urlparse, urlunparse, quote
 
 
 def main():
@@ -25,8 +25,8 @@ def main():
         seen_app = set()
 
         for row in csv.DictReader(fin, fieldnames=["app_id"] + list("1234567") + ["policy_url"]):
-            url = url_fix(row["policy_url"])
-            url_hash = hashlib.blake2s(url.encode()).hexdigest()
+            url = urlparse(row["policy_url"])
+            url_hash = hashlib.blake2s(str(url).encode()).hexdigest()
             app_id = row["app_id"]
 
             if app_id in seen_app:
