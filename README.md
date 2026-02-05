@@ -37,6 +37,21 @@ Additionally, if you want to run the server in the background, use:
 make serve
 ```
 
+## Usage
+
+### File
+If you installed httpie, use
+```angular2html
+http --form POST http://localhost:9191/policy_file_extraction file@data/隐私政策样例-阿里云隐私  政策.docx
+```
+
+### Text Content
+Write your content into a policy.txt file, then execute
+
+```angular2html
+http POST http://localhost:9191/policy_text_extraction Content-Type:application/json  <<< "$(jq -Rs '{input_text: .}'  policy.txt)"
+```
+
 
 # PoliGraph: Automated Privacy Policy Analysis using Knowledge Graphs
 

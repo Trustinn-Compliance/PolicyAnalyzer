@@ -5,6 +5,7 @@ import magic
 from docx import Document
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from pydantic import BaseModel
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from poligrapher.components.extractor import Extractor
@@ -30,8 +31,8 @@ ALLOWED_TYPES = {
 }
 
 
-@app.post("/policy_extraction/")
-async def process_upload_file(file: UploadFile = File(...)):
+@app.post("/policy_file_extraction")
+async def process_privacy_policy_file(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         await file.close()  # Ensure the file is closed
@@ -64,15 +65,18 @@ async def process_upload_file(file: UploadFile = File(...)):
         print(error)
         raise HTTPException(status_code=500)
 
+class PolicyReq(BaseModel):
+    input_text: str
 
-@app.get("/policy_extraction/")
-async def process_upload_file(input_text: str):
+@app.post("/policy_text_extraction")
+async def process_privacy_policy_text(req: PolicyReq):
     try:
-        if len(input_text) >= 36000:
+        if len(req.input_text) >= 36000:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail=f"Too many characters. "
             )
+        input_text = req.input_text
         extracted = extractor.extract(input_text)
         return extracted
     except Exception as error:
