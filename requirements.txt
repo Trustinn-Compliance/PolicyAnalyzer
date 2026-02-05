@@ -4,6 +4,7 @@ langextract
 python-multipart
 fastapi[all]
 python-magic
+PyMuPDF
 # Original dependencies
 spacy
 tldextract

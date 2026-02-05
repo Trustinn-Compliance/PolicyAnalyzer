@@ -1,5 +1,6 @@
 import io
 
+import fitz
 import magic
 from docx import Document
 from dotenv import load_dotenv
@@ -43,7 +44,12 @@ async def process_upload_file(file: UploadFile = File(...)):
             )
 
         if mime_type == 'application/pdf':
-            input_text = ""
+            doc = fitz.open(stream=contents, filetype="pdf")
+
+            text = []
+            for page in doc:
+                text.append(page.get_text())
+            input_text = "\n".join(text)
         else:
             doc = Document(io.BytesIO(contents))
             input_text = read_docx_text(doc)
